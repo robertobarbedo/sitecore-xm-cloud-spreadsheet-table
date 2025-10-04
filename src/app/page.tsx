@@ -1,4 +1,4 @@
-import TableSelection from "./components/v1/TableSelection";
+import TableSelection from "./components/TableSelection";
 
 export default function Page() {
   return <TableSelection />;

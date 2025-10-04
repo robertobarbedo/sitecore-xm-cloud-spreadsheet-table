@@ -1,0 +1,80 @@
+/*
+Spreadsheet Table - Sample Component to be added to the project as a Component
+Require a field called Table of the Type plugin 
+*/
+import { Field } from '@sitecore-jss/sitecore-jss-nextjs';
+import { ComponentProps } from 'lib/component-props';
+
+export const Default: React.FC<SpreadsheetTable> = ({ fields }) => {
+  try {
+    const data = JSON.parse(fields?.Table?.value || '{}');
+    const tableData = data.data || [];
+
+    if (tableData.length === 0) return <div></div>;
+    const headers = tableData[0];
+    const rows = tableData.slice(1);
+    return (
+      <div style={{ overflowX: 'auto', margin: '1rem 0' }}>
+        <table
+          style={{
+            width: '100%',
+            borderCollapse: 'collapse',
+            fontSize: '14px',
+            fontFamily: 'Arial, sans-serif',
+          }}
+        >
+          <thead>
+            <tr style={{ backgroundColor: '#f8f9fa' }}>
+              {headers.map((header: string, index: number) => (
+                <th
+                  key={index}
+                  style={{
+                    padding: '12px 8px',
+                    borderBottom: '2px solid #dee2e6',
+                    borderRight: '1px solid #dee2e6',
+                    textAlign: 'left',
+                    fontWeight: 'bold',
+                    color: '#495057',
+                  }}
+                >
+                  {header}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row: string[], rowIndex: number) => (
+              <tr
+                key={rowIndex}
+                style={{ backgroundColor: rowIndex % 2 === 0 ? '#fff' : '#f8f9fa' }}
+              >
+                {row.map((cell: string, cellIndex: number) => (
+                  <td
+                    key={cellIndex}
+                    style={{
+                      padding: '8px',
+                      borderBottom: '1px solid #dee2e6',
+                      borderRight: '1px solid #dee2e6',
+                      color: '#495057',
+                    }}
+                  >
+                    {cell}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
+  } catch {
+    return <div></div>;
+  }
+};
+
+type SpreadsheetTable = ComponentProps & {
+  params: { [key: string]: string };
+  fields: {
+    Table: Field<string>;
+  };
+};
