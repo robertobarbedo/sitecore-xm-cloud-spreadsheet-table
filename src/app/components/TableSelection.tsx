@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useMarketplaceClient } from "@/src/utils/hooks/useMarketplaceClient";
 
 interface JsonTableData {
@@ -45,7 +45,7 @@ export default function TableSelection() {
     return jsonData;
   };
 
-  const handleTextChange = (text: string) => {
+  const handleTextChange = useCallback((text: string) => {
     setError(null);
     setHasChanges(true);
 
@@ -70,6 +70,7 @@ export default function TableSelection() {
           }
         } catch (parseError) {
           // If JSON parsing fails, treat as raw table data
+          console.log("JSON parsing failed, treating as raw table data " + parseError);
           jsonData = parseTextToJson(text);
         }
       } else {
@@ -93,7 +94,43 @@ export default function TableSelection() {
       setTextInput("");
       setJsonData(null);
     }
-  };
+  }, []);
+
+  // Load existing data from client.getValue when component mounts
+  useEffect(() => {
+    if (isInitialized && client) {
+      const loadExistingData = async () => {
+        try {
+          const existingData = await client.getValue();
+          if (existingData && typeof existingData === 'string' && existingData.trim()) {
+            // Try to parse the existing data as JSON
+            try {
+              const parsedData = JSON.parse(existingData);
+              if (parsedData.data && Array.isArray(parsedData.data)) {
+                // Valid JSON structure, set it directly
+                setJsonData(parsedData);
+                setTextInput(existingData);
+                setHasChanges(false); // No changes yet since we just loaded
+              } else {
+                throw new Error("Invalid data structure");
+              }
+            } catch (parseError) {
+              // If parsing fails, treat as raw text and convert it
+              console.log("Failed to parse existing data as JSON, converting:", parseError);
+              handleTextChange(existingData);
+              setHasChanges(false); // No changes yet since we just loaded
+            }
+          }
+        } catch (error) {
+          console.error("Failed to load existing data:", error);
+          // Don't set error state here since this is just loading existing data
+          // The component can still function normally without pre-existing data
+        }
+      };
+
+      loadExistingData();
+    }
+  }, [isInitialized, client, handleTextChange]);
 
   const handleClear = () => {
     setTextInput("");
@@ -110,7 +147,7 @@ export default function TableSelection() {
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     // Prevent all typing except Ctrl+A (select all), Ctrl+C (copy), Ctrl+V (paste), Ctrl+X (cut)
-    const allowedKeys = ['Backspace', 'Delete', 'ArrowLeft with Ctrl', 'ArrowRight with Ctrl', 'ArrowUp with Ctrl', 'ArrowDown with Ctrl'];
+    //const allowedKeys = ['Backspace', 'Delete', 'ArrowLeft with Ctrl', 'ArrowRight with Ctrl', 'ArrowUp with Ctrl', 'ArrowDown with Ctrl'];
     
     if (e.ctrlKey || e.metaKey) {
       const key = e.key.toLowerCase();
